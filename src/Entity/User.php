@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Controller\UserController;
 use App\Repository\UserRepository;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -16,7 +17,55 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
     denormalizationContext: ['groups' => ['user:write']],
     collectionOperations:[
         'get',
-        'post'
+        'post' => [
+            'controller' => UserController::class,
+            "deserialize" => false,
+            'openapi_context' => [
+                'requestBody' => [
+                    'content' => [
+                        'multipart/form-data' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'prenom' => [
+                                        'type' => 'string'
+                                    ],
+                                    'nom' => [
+                                        'type' => 'string'
+                                    ],
+                                    'email' => [
+                                        'type' => 'string'
+                                    ],
+                                    'telephone' => [
+                                        'type' => 'string'
+                                    ],
+                                    'password' => [
+                                        'type' => 'string'
+                                    ],
+                                    'dateNaissance' => [
+                                        'type' => 'date'
+                                    ],
+                                    'adresse' => [
+                                        'type' => 'string'
+                                    ],
+                                    'password' => [
+                                        'type' => 'string'
+                                    ],
+                                    'photo' => [
+                                        'type' => 'string',
+                                        'format' => 'binary',
+                                    ],
+                                    'profil' => [
+                                        'type' => 'string'
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+
+        ]
     ],
     itemOperations:[
         'get',
@@ -75,6 +124,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(["user:read", "user:write"])]
     private ?string $photo = null;
+
+    #[ORM\ManyToOne(inversedBy: 'personnel')]
+    private ?CabinetMedical $cabinetMedical = null;
+
+    public function __construct()
+    {
+        $this->roles = ['ROLE_'.strtoupper($this->profil)];
+    }
 
     public function getId(): ?int
     {
@@ -226,6 +283,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPhoto(?string $photo): self
     {
         $this->photo = $photo;
+
+        return $this;
+    }
+
+    public function getCabinetMedical(): ?CabinetMedical
+    {
+        return $this->cabinetMedical;
+    }
+
+    public function setCabinetMedical(?CabinetMedical $cabinetMedical): self
+    {
+        $this->cabinetMedical = $cabinetMedical;
 
         return $this;
     }
