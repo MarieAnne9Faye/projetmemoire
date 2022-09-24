@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\UserController;
@@ -128,9 +130,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToOne(inversedBy: 'personnel')]
     private ?CabinetMedical $cabinetMedical = null;
 
+
     public function __construct()
     {
         $this->roles = ['ROLE_'.strtoupper($this->profil)];
+        $this->cabinetMedicals = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -295,6 +299,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCabinetMedical(?CabinetMedical $cabinetMedical): self
     {
         $this->cabinetMedical = $cabinetMedical;
+
+        return $this;
+    }
+
+
+    public function addCabinetMedical(CabinetMedical $cabinetMedical): self
+    {
+        if (!$this->cabinetMedicals->contains($cabinetMedical)) {
+            $this->cabinetMedicals[] = $cabinetMedical;
+            $cabinetMedical->setAdminCabinet($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCabinetMedical(CabinetMedical $cabinetMedical): self
+    {
+        if ($this->cabinetMedicals->removeElement($cabinetMedical)) {
+            // set the owning side to null (unless already changed)
+            if ($cabinetMedical->getAdminCabinet() === $this) {
+                $cabinetMedical->setAdminCabinet(null);
+            }
+        }
 
         return $this;
     }

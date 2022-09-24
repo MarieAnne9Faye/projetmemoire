@@ -2,48 +2,102 @@
 
 namespace App\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
+use App\Controller\CabinetController;
+use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\CabinetMedicalRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CabinetMedicalRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    formats: ['json'],
+    normalizationContext: ['groups' => ['cabinet:read']],
+    denormalizationContext: ['groups' => ['cabinet:write']],
+    collectionOperations:[
+        'get',
+        'post'=> [
+            'controller' => CabinetController::class,
+            "deserialize" => false,
+            'openapi_context' => [
+                'requestBody' => [
+                    'content' => [
+                        'multipart/form-data' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'nom' => [
+                                        'type' => 'string'
+                                    ],
+                                    'logo' => [
+                                        'type' => 'string',
+                                        'format' => 'binary',
+                                    ],
+                                    'adresse' => [
+                                        'type' => 'string'
+                                    ],
+                                    'departement' => [
+                                        'type' => 'integer'
+                                    ],
+                                    'telephone' => [
+                                        'type' => 'string'
+                                    ],
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ],
+    ]
+)]
 class CabinetMedical
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column()]
+    #[Groups(["cabinet:read"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["cabinet:read"])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["cabinet:read", "cabinet:write"])]
     private ?string $logo = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["cabinet:read", "cabinet:write"])]
     private ?string $adresse = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $longitude = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $latitude = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["cabinet:read", "cabinet:write"])]
     private ?string $telephone = null;
 
     #[ORM\Column]
+    #[Groups(["cabinet:read"])]
     private ?bool $isActived = null;
 
     #[ORM\OneToMany(mappedBy: 'cabinetMedical', targetEntity: User::class)]
     private Collection $personnel;
 
+    #[ORM\ManyToOne(inversedBy: 'cabinetMedicals')]
+    private ?User $adminCabinet = null;
+
+    #[ORM\ManyToMany(targetEntity: DomaineMedical::class, inversedBy: 'cabinetMedicals')]
+    private Collection $domaineMedical;
+
+    #[ORM\ManyToOne(inversedBy: 'cabinetMedicals')]
+    #[Groups(["cabinet:read", "cabinet:write"])]
+    private ?Departement $departement = null;
+
     public function __construct()
     {
         $this->personnel = new ArrayCollection();
+        $this->domaineMedical = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -87,29 +141,6 @@ class CabinetMedical
         return $this;
     }
 
-    public function getLongitude(): ?string
-    {
-        return $this->longitude;
-    }
-
-    public function setLongitude(?string $longitude): self
-    {
-        $this->longitude = $longitude;
-
-        return $this;
-    }
-
-    public function getLatitude(): ?string
-    {
-        return $this->latitude;
-    }
-
-    public function setLatitude(?string $latitude): self
-    {
-        $this->latitude = $latitude;
-
-        return $this;
-    }
 
     public function getTelephone(): ?string
     {
@@ -161,6 +192,54 @@ class CabinetMedical
                 $personnel->setCabinetMedical(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getAdminCabinet(): ?User
+    {
+        return $this->adminCabinet;
+    }
+
+    public function setAdminCabinet(?User $adminCabinet): self
+    {
+        $this->adminCabinet = $adminCabinet;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DomaineMedical>
+     */
+    public function getDomaineMedical(): Collection
+    {
+        return $this->domaineMedical;
+    }
+
+    public function addDomaineMedical(DomaineMedical $domaineMedical): self
+    {
+        if (!$this->domaineMedical->contains($domaineMedical)) {
+            $this->domaineMedical[] = $domaineMedical;
+        }
+
+        return $this;
+    }
+
+    public function removeDomaineMedical(DomaineMedical $domaineMedical): self
+    {
+        $this->domaineMedical->removeElement($domaineMedical);
+
+        return $this;
+    }
+
+    public function getDepartement(): ?Departement
+    {
+        return $this->departement;
+    }
+
+    public function setDepartement(?Departement $departement): self
+    {
+        $this->departement = $departement;
 
         return $this;
     }
