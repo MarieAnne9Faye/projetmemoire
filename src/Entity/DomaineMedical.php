@@ -2,22 +2,38 @@
 
 namespace App\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\DomaineMedicalRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: DomaineMedicalRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    formats: ['json'],
+    normalizationContext: ['groups' => ['domaine:read']],
+    denormalizationContext: ['groups' => ['domaine:write']],
+    collectionOperations:[
+        'get',
+        'post'
+    ],
+    itemOperations:[
+        'get',
+        'put',
+        'delete'
+    ]
+)]
 class DomaineMedical
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column()]
+    #[Groups(["domaine:read"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["domaine:read", "domaine:write"])]
     private ?string $libelle = null;
 
     #[ORM\ManyToMany(targetEntity: CabinetMedical::class, mappedBy: 'domaineMedical')]

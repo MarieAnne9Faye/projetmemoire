@@ -94,10 +94,14 @@ class CabinetMedical
     #[Groups(["cabinet:read", "cabinet:write"])]
     private ?Departement $departement = null;
 
+    #[ORM\OneToMany(mappedBy: 'cabinetMedical', targetEntity: RendezVous::class)]
+    private Collection $rendezVouses;
+
     public function __construct()
     {
         $this->personnel = new ArrayCollection();
         $this->domaineMedical = new ArrayCollection();
+        $this->rendezVouses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -240,6 +244,36 @@ class CabinetMedical
     public function setDepartement(?Departement $departement): self
     {
         $this->departement = $departement;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, RendezVous>
+     */
+    public function getRendezVouses(): Collection
+    {
+        return $this->rendezVouses;
+    }
+
+    public function addRendezVouse(RendezVous $rendezVouse): self
+    {
+        if (!$this->rendezVouses->contains($rendezVouse)) {
+            $this->rendezVouses[] = $rendezVouse;
+            $rendezVouse->setCabinetMedical($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRendezVouse(RendezVous $rendezVouse): self
+    {
+        if ($this->rendezVouses->removeElement($rendezVouse)) {
+            // set the owning side to null (unless already changed)
+            if ($rendezVouse->getCabinetMedical() === $this) {
+                $rendezVouse->setCabinetMedical(null);
+            }
+        }
 
         return $this;
     }

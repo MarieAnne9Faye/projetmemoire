@@ -29,11 +29,11 @@ class Departement
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column()]
-    #[Groups(["departement:read", "cabinet:write"])]
+    #[Groups(["departement:read", "cabinet:write", "cabinet:read"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["departement:read", "departement:write"])]
+    #[Groups(["departement:read", "departement:write", "cabinet:read"])]
     private ?string $libelle = null;
 
     #[ORM\ManyToOne(inversedBy: 'departements')]
