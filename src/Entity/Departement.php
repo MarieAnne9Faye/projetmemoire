@@ -4,16 +4,19 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\DepartementRepository;
+use ApiPlatform\Core\Annotation\ApiFilter;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 
 #[ORM\Entity(repositoryClass: DepartementRepository::class)]
 #[ApiResource(
     formats: ['json'],
     normalizationContext: ['groups' => ['departement:read']],
     denormalizationContext: ['groups' => ['departement:write']],
+    attributes: ["pagination_enabled" => false],
     collectionOperations:[
         'get',
         'post'
@@ -24,16 +27,17 @@ use Symfony\Component\Serializer\Annotation\Groups;
         'delete'
     ]
 )]
+#[ApiFilter(SearchFilter::class, properties: ['region' => 'exact'])]
 class Departement
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column()]
-    #[Groups(["departement:read", "cabinet:write", "cabinet:read"])]
+    #[Groups(["departement:read", "cabinet:write", "cabinet:read", "region:read"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["departement:read", "departement:write", "cabinet:read"])]
+    #[Groups(["departement:read", "departement:write", "cabinet:read", "region:read"])]
     private ?string $libelle = null;
 
     #[ORM\ManyToOne(inversedBy: 'departements')]

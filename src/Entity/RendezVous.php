@@ -19,8 +19,6 @@ class RendezVous
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $date = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
-    private ?\DateTimeInterface $horaire = null;
 
     #[ORM\ManyToOne]
     private ?Statut $statut = null;
@@ -36,6 +34,9 @@ class RendezVous
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?DomaineMedical $domaineMedical = null;
+
+    #[ORM\Column(length: 15, nullable: true)]
+    private ?string $horaire = null;
 
 
     public function getId(): ?int
@@ -55,17 +56,7 @@ class RendezVous
         return $this;
     }
 
-    public function getHoraire(): ?\DateTimeInterface
-    {
-        return $this->horaire;
-    }
-
-    public function setHoraire(\DateTimeInterface $horaire): self
-    {
-        $this->horaire = $horaire;
-
-        return $this;
-    }
+    
 
     public function getStatut(): ?Statut
     {
@@ -111,6 +102,18 @@ class RendezVous
     public function setDomaineMedical(?DomaineMedical $domaineMedical): self
     {
         $this->domaineMedical = $domaineMedical;
+
+        return $this;
+    }
+
+    public function getHoraire(): ?string
+    {
+        return $this->horaire;
+    }
+
+    public function setHoraire(?string $horaire): self
+    {
+        $this->horaire = $horaire;
 
         return $this;
     }

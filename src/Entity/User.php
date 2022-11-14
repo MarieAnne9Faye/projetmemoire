@@ -2,15 +2,18 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use App\Controller\UserController;
+use App\Controller\UserControllers;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
+use App\Controller\InfoUserController;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ApiResource(
@@ -20,7 +23,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
     collectionOperations:[
         'get',
         'post' => [
-            'controller' => UserController::class,
+            'controller' => UserControllers::class,
             "deserialize" => false,
             'openapi_context' => [
                 'requestBody' => [
@@ -60,6 +63,9 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
                                     'profil' => [
                                         'type' => 'string'
                                     ],
+                                    'genre' => [
+                                        'type' => 'string'
+                                    ],
                                 ],
                             ],
                         ],
@@ -76,6 +82,11 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
     ]
 )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[UniqueEntity(
+                fields: ['email'],
+                errorPath: 'email',
+                message: 'Cet email est déjà utilisé.',
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -86,6 +97,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180, unique: true)]
     #[Groups(["user:read"])]
+    #[Assert\Email()]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -133,12 +145,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'patient', targetEntity: RendezVous::class)]
     private Collection $rendezVouses;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $genre = null;
+
+    #[ORM\OneToMany(mappedBy: 'patient', targetEntity: Consultation::class)]
+    private Collection $consultations;
+
 
     public function __construct()
     {
-        $this->roles = ['ROLE_'.strtoupper($this->profil->getLibelle())];
+        //$this->roles = ['ROLE_'.strtoupper($this->profil->getLibelle())];
         $this->cabinetMedicals = new ArrayCollection();
         $this->rendezVouses = new ArrayCollection();
+        $this->consultations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -354,6 +373,48 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($rendezVouse->getPatient() === $this) {
                 $rendezVouse->setPatient(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getGenre(): ?string
+    {
+        return $this->genre;
+    }
+
+    public function setGenre(?string $genre): self
+    {
+        $this->genre = $genre;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Consultation>
+     */
+    public function getConsultations(): Collection
+    {
+        return $this->consultations;
+    }
+
+    public function addConsultation(Consultation $consultation): self
+    {
+        if (!$this->consultations->contains($consultation)) {
+            $this->consultations[] = $consultation;
+            $consultation->setPatient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeConsultation(Consultation $consultation): self
+    {
+        if ($this->consultations->removeElement($consultation)) {
+            // set the owning side to null (unless already changed)
+            if ($consultation->getPatient() === $this) {
+                $consultation->setPatient(null);
             }
         }
 

@@ -39,20 +39,53 @@ class RendezVousRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return RendezVous[] Returns an array of RendezVous objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('r')
-//            ->andWhere('r.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('r.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function mesRv($user, $page): array
+    {
+        return $this->createQueryBuilder('r')
+            ->select("r.id, DATE_FORMAT(r.date, '%d/%m/%Y') as date, r.horaire, d.libelle as domaine, c.nom as cabinet, s.libelle as statut")
+            ->innerJoin('r.domaineMedical', 'd')
+            ->innerJoin('r.cabinetMedical', 'c')
+            ->innerJoin('r.statut', 's')
+            ->innerJoin('r.patient', 'p')
+            ->andWhere('p.id = :val')
+            ->setParameter('val', $user)
+            ->orderBy('r.date', 'DESC')
+            ->setFirstResult(((int)$page - 1) * 10)->setMaxResults(10)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    public function CountmesRv($user)
+    {
+        return $this->createQueryBuilder('r')
+            ->select("count(r.id)")
+            ->innerJoin('r.domaineMedical', 'd')
+            ->innerJoin('r.cabinetMedical', 'c')
+            ->innerJoin('r.statut', 's')
+            ->innerJoin('r.patient', 'p')
+            ->andWhere('p.id = :val')
+            ->setParameter('val', $user)
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
+
+    public function CountmesRvStatut($user, $statut)
+    {
+        return $this->createQueryBuilder('r')
+            ->select("count(r.id)")
+            ->innerJoin('r.domaineMedical', 'd')
+            ->innerJoin('r.cabinetMedical', 'c')
+            ->innerJoin('r.statut', 's')
+            ->innerJoin('r.patient', 'p')
+            ->andWhere('p.id = :val')
+            ->andWhere('s.libelle = :statut')
+            ->setParameters(['val'=> $user, 'statut' => $statut])
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
 
 //    public function findOneBySomeField($value): ?RendezVous
 //    {

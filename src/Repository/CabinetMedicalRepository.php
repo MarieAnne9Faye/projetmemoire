@@ -39,20 +39,62 @@ class CabinetMedicalRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return CabinetMedical[] Returns an array of CabinetMedical objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    
+    public function findListCabinet($page, $filtre)
+    {
+         $qb = $this->createQueryBuilder('c')
+            ->select("c.id, c.nom, r.libelle as region, d.libelle as departement, c.logo")
+            ->innerJoin('c.departement','d')
+            ->innerJoin('d.region','r')
+            ->setFirstResult(((int)$page - 1) * 10)->setMaxResults(10);
+
+            if ($filtre['region'] != ''){
+                $qb->andWhere('r.id = :region')
+                   ->setParameter('region', $filtre['region']);
+            }
+
+            if ($filtre['departement'] != ''){
+                $qb->andWhere('d.id = :dep')
+                   ->setParameter('dep',$filtre['departement']);
+            }
+
+            if ($filtre['cabinet'] != ''){
+                $qb->andWhere('c.id = :nom')
+                   ->setParameter('nom',$filtre['cabinet']);
+            }
+            
+            if ($filtre['domaine'] != ''){
+                $qb->innerJoin('c.domaineMedical', 'dom')->andWhere('dom.id = :dom')
+                   ->setParameter('dom',$filtre['domaine']);
+            }
+
+            return $qb->getQuery()->getResult();
+    }
+
+    public function countListCabinet($page, $filtre)
+    {
+         $qb = $this->createQueryBuilder('c')
+            ->select("count(c.id)")
+            ->innerJoin('c.departement','d')
+            ->innerJoin('d.region','r');
+
+            if ($filtre['region'] != ''){
+                $qb->andWhere('r.id = :region')
+                   ->setParameter('region', $filtre['region']);
+            }
+
+            if ($filtre['departement'] != ''){
+                $qb->andWhere('d.id = :dep')
+                   ->setParameter('dep',$filtre['departement']);
+            }
+
+            if ($filtre['cabinet'] != ''){
+                $qb->andWhere('c.nom = :nom')
+                   ->setParameter('nom',$filtre['cabinet']);
+            }
+            
+            return $qb->getQuery()->getSingleScalarResult();
+    }
 
 //    public function findOneBySomeField($value): ?CabinetMedical
 //    {

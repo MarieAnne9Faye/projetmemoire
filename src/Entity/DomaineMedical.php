@@ -14,6 +14,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
     formats: ['json'],
     normalizationContext: ['groups' => ['domaine:read']],
     denormalizationContext: ['groups' => ['domaine:write']],
+    attributes: ["pagination_enabled" => false],
     collectionOperations:[
         'get',
         'post'

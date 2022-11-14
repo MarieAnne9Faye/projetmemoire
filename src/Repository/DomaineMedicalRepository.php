@@ -39,20 +39,20 @@ class DomaineMedicalRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return DomaineMedical[] Returns an array of DomaineMedical objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('d')
-//            ->andWhere('d.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('d.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+
+   public function findDomaineOfCabinet($id): array
+   {
+       return $this->createQueryBuilder('d')
+            ->select('d.id, d.libelle')
+            ->innerJoin('d.cabinetMedicals','c')
+            ->where('c.id = :val')
+            ->setParameter('val', $id)
+            ->orderBy('d.libelle', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+   }
+
 
 //    public function findOneBySomeField($value): ?DomaineMedical
 //    {

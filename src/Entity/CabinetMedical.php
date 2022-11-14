@@ -4,17 +4,20 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\CabinetController;
+use ApiPlatform\Core\Annotation\ApiFilter;
 use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\CabinetMedicalRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 
 #[ORM\Entity(repositoryClass: CabinetMedicalRepository::class)]
 #[ApiResource(
     formats: ['json'],
     normalizationContext: ['groups' => ['cabinet:read']],
     denormalizationContext: ['groups' => ['cabinet:write']],
+    attributes: ["pagination_enabled" => false],
     collectionOperations:[
         'get',
         'post'=> [
@@ -52,6 +55,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ],
     ]
 )]
+#[ApiFilter(SearchFilter::class, properties: ['departement' => 'exact'])]
 class CabinetMedical
 {
     #[ORM\Id]
@@ -96,6 +100,10 @@ class CabinetMedical
 
     #[ORM\OneToMany(mappedBy: 'cabinetMedical', targetEntity: RendezVous::class)]
     private Collection $rendezVouses;
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[Groups(["cabinet:read"])]
+    private ?User $medecin = null;
 
     public function __construct()
     {
@@ -274,6 +282,18 @@ class CabinetMedical
                 $rendezVouse->setCabinetMedical(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getMedecin(): ?User
+    {
+        return $this->medecin;
+    }
+
+    public function setMedecin(?User $medecin): self
+    {
+        $this->medecin = $medecin;
 
         return $this;
     }

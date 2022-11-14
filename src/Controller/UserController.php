@@ -2,43 +2,54 @@
 
 namespace App\Controller;
 
-use Datetime;
-use App\Entity\User;
-use App\Service\FileUploader;
-use App\Repository\ProfilRepository;
+use Rest\Post;
+use App\Manager\UserManager;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpKernel\Attribute\AsController;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-#[AsController]
 class UserController extends AbstractController
 {
-
-    public function __invoke(Request $req, UserPasswordHasherInterface $hash, ProfilRepository $profilRepo, FileUploader $uploader): User | Response
+    protected $userManager;
+    public function __construct(UserManager $userManager)
     {
-        $uploadedFile = $req->files->get('photo');
-        $data = $req->request->all();
-        //dd($data);
-        $user = new User();
-        $profil = $profilRepo->find((int)$data['profil']);
-        $user->setPrenom($data['prenom'])
-            ->setNom($data['nom'])
-            ->setEmail($data['email'])
-            ->setTelephone($data['telephone'])
-            ->setAdresse($data['adresse'])
-            ->setDateNaissance(new Datetime($data['dateNaissance']))
-            ->setPassword($hash->hashPassword($user, $data['password']))
-            ->setProfil($profil)
-            ->setRoles(['ROLE_'.strtoupper($profil->getLibelle())]);
-        
-        if($uploadedFile){
-            $user->setPhoto($uploader->upload($uploadedFile));
-        }
-    
-        return $user;
-
+        $this->userManager = $userManager;
     }
+    
+    #[Rest\Post('/api/inscription')]
+    public function inscription(Request $request)
+    {
+        $data = $request->request->all();
+        $data['photo'] = $request->files->get('photo');
+        return $this->userManager->inscription($data);
+    }
+
+    #[Rest\Post('/api/changePassword/{id}')]
+    public function code_secret(Request $request, $id)
+    {
+         $data = json_decode($request->getContent(),true);
+         $data['id'] = $id;
+
+         return $this->userManager->code_secret($data);
+    }
+
+    #[Rest\Post('/api/sec/avatar/{id}')]
+    public function avatar(Request $request, $id)
+    {
+         $data['photo'] = $request->files->get('photo');
+         $data['id'] = $id;
+
+         return $this->userManager->avatar($data);
+    }
+
+    #[Rest\Get('/api/infoUser')]
+    public function infoUser()
+    {
+         $user = $this->getUser();
+         return $this->userManager->infoUser($user);
+    }
+
+    
 }
